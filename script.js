@@ -1,4 +1,4 @@
-window.onload = function () {
+window.onload = () => {
   const canvasWidth = 900;
   const canvasHeight = 600;
   const blockSize = 30;
@@ -12,9 +12,7 @@ window.onload = function () {
   let score;
   let timeOut;
 
-  init();
-
-  function init() {
+  const init = () => {
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
     canvas.style.border = '30px solid gray';
@@ -23,9 +21,9 @@ window.onload = function () {
     canvas.style.backgroundColor = '#ddd';
     document.body.appendChild(canvas);
     launch();
-  }
+  };
 
-  function launch() {
+  const launch = () => {
     snakee = new Snake(
       [
         [6, 4],
@@ -41,9 +39,9 @@ window.onload = function () {
     clearTimeout(timeOut);
     delay = 100;
     refreshCanvas();
-  }
+  };
 
-  function refreshCanvas() {
+  const refreshCanvas = () => {
     snakee.advance();
     if (snakee.checkCollision()) {
       gameOver();
@@ -66,13 +64,13 @@ window.onload = function () {
       applee.draw();
       timeOut = setTimeout(refreshCanvas, delay);
     }
-  }
+  };
 
-  function speedUp() {
+  const speedUp = () => {
     delay /= 2;
-  }
+  };
 
-  function gameOver() {
+  const gameOver = () => {
     ctx.save();
     ctx.font = 'bold 70px sans-serif';
     ctx.fillStyle = '#000';
@@ -96,9 +94,9 @@ window.onload = function () {
       centreY - 120
     );
     ctx.restore();
-  }
+  };
 
-  function drawScore() {
+  const drawScore = () => {
     ctx.save();
     ctx.font = 'bold 200px sans-serif';
     ctx.fillStyle = 'gray';
@@ -108,29 +106,31 @@ window.onload = function () {
     const centreY = canvasHeight / 2;
     ctx.fillText(score.toString(), centreX, centreY);
     ctx.restore();
-  }
+  };
 
-  function drawBlock(ctx, position) {
+  const drawBlock = (ctx, position) => {
     const x = position[0] * blockSize;
     const y = position[1] * blockSize;
     ctx.fillRect(x, y, blockSize, blockSize);
-  }
+  };
 
-  function Snake(body, direction) {
-    this.body = body;
-    this.direction = direction;
-    this.ateApple = false;
+  class Snake {
+    constructor(body, direction) {
+      this.body = body;
+      this.direction = direction;
+      this.ateApple = false;
+    }
 
-    this.draw = function () {
+    draw() {
       ctx.save();
       ctx.fillStyle = '#ff0000';
       for (let i = 0; i < this.body.length; i++) {
         drawBlock(ctx, this.body[i]);
       }
       ctx.restore();
-    };
+    }
 
-    this.advance = function () {
+    advance() {
       const nextPosition = this.body[0].slice();
       switch (this.direction) {
         case 'left':
@@ -151,9 +151,9 @@ window.onload = function () {
       this.body.unshift(nextPosition);
       if (!this.ateApple) this.body.pop();
       else this.ateApple = false;
-    };
+    }
 
-    this.setDirection = function (newDirection) {
+    setDirection(newDirection) {
       let allowedDirections;
       switch (this.direction) {
         case 'left':
@@ -170,9 +170,9 @@ window.onload = function () {
       if (allowedDirections.indexOf(newDirection) > -1) {
         this.direction = newDirection;
       }
-    };
+    }
 
-    this.checkCollision = function () {
+    checkCollision() {
       let wallCollision = false;
       let snakeCollision = false;
       const head = this.body[0];
@@ -195,9 +195,9 @@ window.onload = function () {
       }
 
       return wallCollision || snakeCollision;
-    };
+    }
 
-    this.isEatingApple = function (appleToEat) {
+    isEatingApple(appleToEat) {
       const head = this.body[0];
       if (
         head[0] === appleToEat.position[0] &&
@@ -205,13 +205,15 @@ window.onload = function () {
       )
         return true;
       else return false;
-    };
+    }
   }
 
-  function Apple(position) {
-    this.position = position;
+  class Apple {
+    constructor(position) {
+      this.position = position;
+    }
 
-    this.draw = function () {
+    draw() {
       ctx.save();
       ctx.fillStyle = '#33cc33';
       ctx.beginPath();
@@ -221,15 +223,15 @@ window.onload = function () {
       ctx.arc(x, y, radius, 0, Math.PI * 2, true);
       ctx.fill();
       ctx.restore();
-    };
+    }
 
-    this.setNewPosition = function () {
+    setNewPosition() {
       const newX = Math.round(Math.random() * (widthInBlocks - 1));
       const newY = Math.round(Math.random() * (heightInBlocks - 1));
       this.position = [newX, newY];
-    };
+    }
 
-    this.isOnSnake = function (snakeToCheck) {
+    isOnSnake(snakeToCheck) {
       let isOnSnake = false;
       for (let i = 0; i < snakeToCheck.body.length; i++) {
         if (
@@ -240,10 +242,10 @@ window.onload = function () {
         }
       }
       return isOnSnake;
-    };
+    }
   }
 
-  document.onkeydown = function handleKeyDown(e) {
+  document.onkeydown = (e) => {
     const key = e.keyCode;
     let newDirection;
     switch (key) {
@@ -267,4 +269,6 @@ window.onload = function () {
     }
     snakee.setDirection(newDirection);
   };
+
+  init();
 };
