@@ -1,133 +1,77 @@
 window.onload = () => {
-  const canvasWidth = 900;
-  const canvasHeight = 600;
-  const blockSize = 30;
-  const widthInBlocks = canvasWidth / blockSize;
-  const heightInBlocks = canvasHeight / blockSize;
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  let delay = 100;
-  let snakee;
-  let applee;
-  let score;
-  let timeOut;
-
-  const init = () => {
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-    canvas.style.border = '30px solid gray';
-    canvas.style.margin = '50px auto';
-    canvas.style.display = 'block';
-    canvas.style.backgroundColor = '#ddd';
-    document.body.appendChild(canvas);
-    launch();
-  };
-
-  const launch = () => {
-    snakee = new Snake(
-      [
-        [6, 4],
-        [5, 4],
-        [4, 4],
-        [3, 4],
-        [2, 4],
-      ],
-      'right'
-    );
-    applee = new Apple([10, 10]);
-    score = 0;
-    clearTimeout(timeOut);
-    delay = 100;
-    refreshCanvas();
-  };
-
-  const refreshCanvas = () => {
-    snakee.advance();
-    if (snakee.checkCollision()) {
-      gameOver();
-    } else {
-      if (snakee.isEatingApple(applee)) {
-        score++;
-        snakee.ateApple = true;
-
-        do {
-          applee.setNewPosition();
-        } while (applee.isOnSnake(snakee));
-
-        if (score % 5 == 0) {
-          speedUp();
-        }
-      }
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      drawScore();
-      snakee.draw();
-      applee.draw();
-      timeOut = setTimeout(refreshCanvas, delay);
+  class Game {
+    constructor() {
+      this.canvasWidth = 900;
+      this.canvasHeight = 600;
+      this.blockSize = 30;
+      this.canvas = document.createElement('canvas');
+      this.ctx = this.canvas.getContext('2d');
+      this.widthInBlocks = this.canvasWidth / this.blockSize;
+      this.heightInBlocks = this.canvasHeight / this.blockSize;
+      this.centreX = this.canvasWidth / 2;
+      this.centreY = this.canvasHeight / 2;
+      this.delay = 100;
+      this.snakee;
+      this.applee;
+      this.score;
+      this.timeOut;
     }
-  };
 
-  const speedUp = () => {
-    delay /= 2;
-  };
+    init() {
+      this.canvas.width = this.canvasWidth;
+      this.canvas.height = this.canvasHeight;
+      this.canvas.style.border = '30px solid gray';
+      this.canvas.style.margin = '50px auto';
+      this.canvas.style.display = 'block';
+      this.canvas.style.backgroundColor = '#ddd';
+      document.body.appendChild(this.canvas);
+      this.launch();
+    }
 
-  const gameOver = () => {
-    ctx.save();
-    ctx.font = 'bold 70px sans-serif';
-    ctx.fillStyle = '#000';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 5;
-    const centreX = canvasWidth / 2;
-    const centreY = canvasHeight / 2;
-    ctx.strokeText('Game Over', centreX, centreY - 180);
-    ctx.fillText('Game Over', centreX, centreY - 180);
-    ctx.font = 'bold 30px sans-serif';
-    ctx.strokeText(
-      'Appuyer sur la touche Espace pour rejouer',
-      centreX,
-      centreY - 120
-    );
-    ctx.fillText(
-      'Appuyer sur la touche Espace pour rejouer',
-      centreX,
-      centreY - 120
-    );
-    ctx.restore();
-  };
+    launch() {
+      this.snakee = new Snake('right', [6, 4], [5, 4], [4, 4], [3, 4], [2, 4]);
+      this.applee = new Apple();
+      this.score = 0;
+      clearTimeout(this.timeOut);
+      this.delay = 100;
+      this.refreshCanvas();
+    }
 
-  const drawScore = () => {
-    ctx.save();
-    ctx.font = 'bold 200px sans-serif';
-    ctx.fillStyle = 'gray';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    const centreX = canvasWidth / 2;
-    const centreY = canvasHeight / 2;
-    ctx.fillText(score.toString(), centreX, centreY);
-    ctx.restore();
-  };
+    refreshCanvas() {
+      this.snakee.advance();
+      if (this.snakee.checkCollision(this.widthInBlocks, this.heightInBlocks)) {
+        Drawing.gameOver(this.ctx, this.centreX, this.centreY);
+      } else {
+        if (this.snakee.isEatingApple(this.applee)) {
+          this.score++;
+          this.snakee.ateApple = true;
 
-  const drawBlock = (ctx, position) => {
-    const x = position[0] * blockSize;
-    const y = position[1] * blockSize;
-    ctx.fillRect(x, y, blockSize, blockSize);
-  };
+          do {
+            this.applee.setNewPosition(this.widthInBlocks, this.heightInBlocks);
+          } while (this.applee.isOnSnake(this.snakee));
+
+          if (this.score % 5 == 0) {
+            this.speedUp();
+          }
+        }
+        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        Drawing.drawScore(this.ctx, this.centreX, this.centreY, this.score);
+        Drawing.drawSnake(this.ctx, this.blockSize, this.snakee);
+        Drawing.drawApple(this.ctx, this.blockSize, this.applee);
+        this.timeOut = setTimeout(this.refreshCanvas.bind(this), this.delay);
+      }
+    }
+
+    speedUp() {
+      this.delay /= 2;
+    }
+  }
 
   class Snake {
-    constructor(body, direction) {
+    constructor(direction, ...body) {
       this.body = body;
       this.direction = direction;
       this.ateApple = false;
-    }
-
-    draw() {
-      ctx.save();
-      ctx.fillStyle = '#ff0000';
-      for (let i = 0; i < this.body.length; i++) {
-        drawBlock(ctx, this.body[i]);
-      }
-      ctx.restore();
     }
 
     advance() {
@@ -172,13 +116,15 @@ window.onload = () => {
       }
     }
 
-    checkCollision() {
+    checkCollision(widthInBlocks, heightInBlocks) {
       let wallCollision = false;
       let snakeCollision = false;
-      const head = this.body[0];
-      const rest = this.body.slice(1);
-      const snakeX = head[0];
-      const snakeY = head[1];
+      // const head = this.body[0];
+      // const rest = this.body.slice(1);
+      // const snakeX = head[0];
+      // const snakeY = head[1];
+      const [head, ...rest] = this.body;
+      const [snakeX, snakeY] = head;
       const minX = 0;
       const minY = 0;
       const maxX = widthInBlocks - 1;
@@ -189,9 +135,14 @@ window.onload = () => {
       if (isNotBetweenHorizontalWalls || isNotBetweenVerticalWalls)
         wallCollision = true;
 
-      for (let i = 0; i < rest.length; i++) {
-        if (snakeX === rest[i][0] && snakeY === rest[i][1])
+      // for (let i = 0; i < rest.length; i++) {
+      //   if (snakeX === rest[i][0] && snakeY === rest[i][1])
+      //     snakeCollision = true;
+      // }
+      for (let block of rest) {
+        if (snakeX === block[0] && snakeY === block[1]) {
           snakeCollision = true;
+        }
       }
 
       return wallCollision || snakeCollision;
@@ -209,23 +160,11 @@ window.onload = () => {
   }
 
   class Apple {
-    constructor(position) {
+    constructor(position = [10, 10]) {
       this.position = position;
     }
 
-    draw() {
-      ctx.save();
-      ctx.fillStyle = '#33cc33';
-      ctx.beginPath();
-      const radius = blockSize / 2;
-      const x = this.position[0] * blockSize + radius;
-      const y = this.position[1] * blockSize + radius;
-      ctx.arc(x, y, radius, 0, Math.PI * 2, true);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    setNewPosition() {
+    setNewPosition(widthInBlocks, heightInBlocks) {
       const newX = Math.round(Math.random() * (widthInBlocks - 1));
       const newY = Math.round(Math.random() * (heightInBlocks - 1));
       this.position = [newX, newY];
@@ -233,17 +172,96 @@ window.onload = () => {
 
     isOnSnake(snakeToCheck) {
       let isOnSnake = false;
-      for (let i = 0; i < snakeToCheck.body.length; i++) {
-        if (
-          this.position[0] === snakeToCheck.body[i][0] &&
-          this.position[1] === snakeToCheck.body[i][1]
-        ) {
+      // for (let i = 0; i < snakeToCheck.body.length; i++) {
+      //   if (
+      //     this.position[0] === snakeToCheck.body[i][0] &&
+      //     this.position[1] === snakeToCheck.body[i][1]
+      //   ) {
+      //     isOnSnake = true;
+      //   }
+      // }
+      for (let block of snakeToCheck.body) {
+        if (this.position[0] === block[0] && this.position[1] === block[1]) {
           isOnSnake = true;
         }
       }
       return isOnSnake;
     }
   }
+
+  class Drawing {
+    static gameOver(ctx, centreX, centreY) {
+      ctx.save();
+      ctx.font = 'bold 70px sans-serif';
+      ctx.fillStyle = '#000';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 5;
+      ctx.strokeText('Game Over', centreX, centreY - 180);
+      ctx.fillText('Game Over', centreX, centreY - 180);
+      ctx.font = 'bold 30px sans-serif';
+      ctx.strokeText(
+        'Appuyer sur la touche Espace pour rejouer',
+        centreX,
+        centreY - 120
+      );
+      ctx.fillText(
+        'Appuyer sur la touche Espace pour rejouer',
+        centreX,
+        centreY - 120
+      );
+      ctx.restore();
+    }
+
+    static drawScore(ctx, centreX, centreY, score) {
+      ctx.save();
+      ctx.font = 'bold 200px sans-serif';
+      ctx.fillStyle = 'gray';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(score.toString(), centreX, centreY);
+      ctx.restore();
+    }
+
+    static drawSnake(ctx, blockSize, snake) {
+      ctx.save();
+      ctx.fillStyle = '#ff0000';
+      // for (let i = 0; i < this.body.length; i++) {
+      //   drawBlock(ctx, this.body[i]);
+      // }
+      for (let block of snake.body) {
+        this.drawBlock(ctx, block, blockSize);
+      }
+      ctx.restore();
+    }
+
+    static drawApple(ctx, blockSize, apple) {
+      ctx.save();
+      ctx.fillStyle = '#33cc33';
+      ctx.beginPath();
+      const radius = blockSize / 2;
+      const x = apple.position[0] * blockSize + radius;
+      const y = apple.position[1] * blockSize + radius;
+      ctx.arc(x, y, radius, 0, Math.PI * 2, true);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    static drawBlock(ctx, position, blockSize) {
+      // const x = position[0] * blockSize;
+      // const y = position[1] * blockSize;
+      // ctx.fillRect(x, y, blockSize, blockSize);
+      const [x, y] = position;
+      ctx.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
+    }
+  }
+
+  let myGame = new Game();
+  myGame.init();
+
+  // let myGame2 = new Game();
+  // myGame2.init();
 
   document.onkeydown = (e) => {
     const key = e.keyCode;
@@ -262,13 +280,19 @@ window.onload = () => {
         newDirection = 'down';
         break;
       case 32:
-        launch();
+        myGame.launch();
+        // myGame2.launch();
         return;
       default:
         return;
     }
-    snakee.setDirection(newDirection);
+    myGame.snakee.setDirection(newDirection);
+    // myGame2.snakee.setDirection(newDirection);
   };
-
-  init();
 };
+
+// OPERATEUR REST
+// => Prendre des valeurs libres et les réunir dans un tableau
+
+// OPERATEUR SPREAD
+// => Prendre un tableau et retourner les valeurs libres qui le composent
